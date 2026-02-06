@@ -1,56 +1,76 @@
 pipeline {
-    agent any
+  agent any
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
+  options {
+    timestamps()
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
     }
 
-    triggers {
-        githubPush()
+    stage('Verify Kubernetes Access') {
+      steps {
+        sh 'kubectl get nodes'
+      }
     }
 
-    environment {
-        CONFTEST_VERSION = '0.56.0'
+    stage('Install Gatekeeper (idempotent)') {
+      steps {
+        sh '''
+          kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.14/deploy/gatekeeper.yaml
+        '''
+      }
     }
 
-    stages {
-
-        stage('Install Conftest') {
-            steps {
-                sh '''
-                set -e
-
-                curl -L https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Darwin_x86_64.tar.gz \
-                  | tar xz
-
-                chmod +x conftest
-                ./conftest --version
-                '''
-            }
-        }
-
-        stage('Run Policy Tests') {
-            steps {
-                dir('01-eks-gatekeeper') {
-                    sh '''
-                    ../conftest test tests --policy policies
-                    '''
-                }
-            }
-        }
+    stage('Apply Gatekeeper Policies') {
+      steps {
+        sh '''
+          kubectl apply -f 01-eks-gatekeeper/policies/
+        '''
+      }
     }
 
-    post {
-        success {
-            echo "✅ Policy checks PASSED"
+    stage('Policy Enforcement Test (expected failure)') {
+      steps {
+        script {
+          int status = sh(
+            script: 'kubectl apply -f 01-eks-gatekeeper/tests/bad-pod.yaml',
+            returnStatus: true
+          )
+
+          if (status == 0) {
+            error("❌ Policy did NOT block bad pod — guardrail FAILED")
+          } else {
+            echo("✅ Policy correctly blocked bad pod — guardrail OK")
+          }
         }
-        failure {
-            echo "❌ Policy checks FAILED"
-        }
-        always {
-            cleanWs()
-        }
+      }
     }
+
+    stage('Positive Control (good resource)') {
+      steps {
+        sh '''
+          kubectl apply -f 01-eks-gatekeeper/tests/good-deployment.yaml
+        '''
+      }
+    }
+  }
+
+  post {
+    success {
+      echo '🎉 Pipeline SUCCESS — Guardrails enforced correctly'
+    }
+    failure {
+      echo '❌ Pipeline FAILED — Guardrails broken'
+    }
+    always {
+      cleanWs()
+    }
+  }
 }
 
