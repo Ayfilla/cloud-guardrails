@@ -13,12 +13,6 @@ pipeline {
       }
     }
 
-    stage('Verify Kubernetes Access') {
-      steps {
-        sh 'kubectl get nodes'
-      }
-    }
-
     stage('Install Gatekeeper (idempotent)') {
       steps {
         sh '''
