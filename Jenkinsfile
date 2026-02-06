@@ -44,9 +44,9 @@ pipeline {
           )
 
           if (status == 0) {
-            error("❌ Policy did NOT block bad pod — guardrail FAILED")
+            error("❌ Guardrail FAILED: bad pod was NOT blocked")
           } else {
-            echo("✅ Policy correctly blocked bad pod — guardrail OK")
+            echo("✅ Guardrail OK: bad pod correctly blocked")
           }
         }
       }
@@ -63,10 +63,10 @@ pipeline {
 
   post {
     success {
-      echo '🎉 Pipeline SUCCESS — Guardrails enforced correctly'
+      echo '🎉 PIPELINE SUCCESS — Guardrails enforced correctly'
     }
     failure {
-      echo '❌ Pipeline FAILED — Guardrails broken'
+      echo '❌ PIPELINE FAILED — Guardrails broken'
     }
     always {
       cleanWs()
