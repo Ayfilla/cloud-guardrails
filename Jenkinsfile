@@ -5,11 +5,25 @@ pipeline {
     timestamps()
   }
 
+  environment {
+    KUBECTL_VERSION = "v1.29.0"
+  }
+
   stages {
 
     stage('Checkout') {
       steps {
         checkout scm
+      }
+    }
+
+    stage('Install kubectl') {
+      steps {
+        sh '''
+          curl -LO https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          mv kubectl /usr/local/bin/kubectl
+        '''
       }
     }
 
