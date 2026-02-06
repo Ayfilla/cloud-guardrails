@@ -7,6 +7,7 @@ pipeline {
 
   environment {
     KUBECTL_VERSION = "v1.29.0"
+    PATH = "${env.WORKSPACE}/bin:${env.PATH}"
   }
 
   stages {
@@ -17,12 +18,14 @@ pipeline {
       }
     }
 
-    stage('Install kubectl') {
+    stage('Install kubectl (local)') {
       steps {
         sh '''
+          mkdir -p bin
           curl -LO https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
           chmod +x kubectl
-          mv kubectl /usr/local/bin/kubectl
+          mv kubectl bin/kubectl
+          kubectl version --client
         '''
       }
     }
