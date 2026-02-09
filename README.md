@@ -1,7 +1,7 @@
 ## 📁 Repository Layout
 
 ```
-cloud-guardrails/
+AWS Cloud Guardrails Platform (Terraform + OPA Gatekeeper)/
 ├── 01-eks-gatekeeper/
 │ ├── install-gatekeeper.sh
 │ ├── policies/
@@ -23,8 +23,28 @@ cloud-guardrails/
 │
 └── .github/workflows/policy-checks.yml
 ```
-👤 Author
+## Architecture
 
+Components:
+
+- Amazon EKS with OPA Gatekeeper
+- Terraform modules for policy deployment
+- AWS Config + Security Hub integration
+- Automated remediation via Lambda
+- CI validation pipeline (policy checks)
+
+Flow:
+Terraform → Deploy Guardrails → Policy Validation → Security Findings → Auto-Remediation
+
+## Tech Stack
+AWS (EKS, Config, Security Hub, Lambda, EventBridge)
+Terraform
+OPA Gatekeeper
+Conftest
+Jenkins / CI Pipeline
+Bash, Python
+
+👤 Author
 Ayfilla
 GitHub: https://github.com/Ayfilla
 
